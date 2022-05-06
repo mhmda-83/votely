@@ -1,0 +1,106 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions", "fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  username      String    @unique
+  password      String?
+  refresh_token String?
+  photo         String?
+  provider      Providers
+  polls         Poll[]
+  votes         Vote[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([email])
+  @@map("user")
+}
+
+model Poll {
+  id               Int       @id @default(autoincrement())
+  title            String    @db.VarChar(1000)
+  description      String?   @db.Text
+  cover            String?   @db.VarChar(255)
+  owner_id         Int?
+  short_identifier String    @db.VarChar(5)
+  owner            User?     @relation(fields: [owner_id], references: [id], onDelete: SetNull)
+  votes            Vote[]
+  options          Option[]
+  poll_tags        PollTag[]
+  is_closed        Boolean   @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([short_identifier])
+  @@index([owner_id])
+  @@index([title])
+  @@map("poll")
+}
+
+model PollTag {
+  id      Int  @id @default(autoincrement())
+  poll_id Int
+  poll    Poll @relation(fields: [poll_id], references: [id], onDelete: Cascade)
+  tag_id  Int
+  tag     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@unique([poll_id, tag_id])
+  @@map("poll_tag")
+}
+
+model Tag {
+  id         Int       @id @default(autoincrement())
+  title      String    @db.VarChar(255)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  poll_tags  PollTag[]
+
+  @@unique([title])
+  @@map("tag")
+}
+
+model Option {
+  id      Int    @id @default(autoincrement())
+  title   String @db.VarChar(255)
+  poll_id Int
+  poll    Poll   @relation(fields: [poll_id], references: [id], onDelete: Cascade)
+  votes   Vote[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([poll_id])
+  @@map("option")
+}
+
+model Vote {
+  id        Int    @id @default(autoincrement())
+  poll_id   Int
+  poll      Poll   @relation(fields: [poll_id], references: [id], onDelete: Cascade)
+  voter_id  Int
+  voter     User   @relation(fields: [voter_id], references: [id], onDelete: Cascade)
+  choice_id Int
+  choice    Option @relation(fields: [choice_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([poll_id, voter_id])
+  @@map("vote")
+}
+
+enum Providers {
+  local
+  google
+}

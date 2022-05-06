@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  app:
+    container_name: votely_app
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ./covers:/app/covers
+    ports:
+      - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+      # - NODE_ENV=production
+      - DATABASE_URL=postgres://application:password@postgres:5432/votely
+      - REDIS_URL=redis://redis:6379
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+  postgres:
+    container_name: votely_postgres
+    image: postgres:13.6-alpine
+    environment:
+      - POSTGRES_USER=application
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=votely
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    ports:
+      - "5532:5432"
+    restart: always
+  redis:
+    container_name: votely_redis
+    image: redis:6.2.6-alpine
+    ports:
+      - "6479:6379"
+    restart: always
+
+networks:
+  default:
+    name: votely
