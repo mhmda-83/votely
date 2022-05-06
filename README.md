@@ -6,7 +6,7 @@ A platform for holding public voting!
 
 `npm i`
 
-`cp .example.env .env`
+`cp .env.example .env`
 
 `npm run start:dev`
 
